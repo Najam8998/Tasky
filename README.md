@@ -252,7 +252,9 @@ The full Rust/Anchor smart contract source is included at `TaskyProgram.rs` in t
 
 ## Demo Video
 
-> Add your demo video link here (Loom / YouTube — under 3 minutes)
+[![Tasky Demo Video](https://img.youtube.com/vi/MKadGAlJg80/maxresdefault.jpg)](https://www.youtube.com/watch?v=MKadGAlJg80)
+
+▶️ **[Watch on YouTube](https://www.youtube.com/watch?v=MKadGAlJg80)**
 
 ---
 
