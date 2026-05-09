@@ -4,7 +4,8 @@
 import React, { useMemo } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { getAllTasks, lamportsToSol } from '../lib/contract'
+import { lamportsToSol } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 
 /* ── Tiny SVG bar-chart component ── */
 const BarChart: React.FC<{ data: { label: string; value: number; color?: string }[] }> = ({ data }) => {
@@ -49,9 +50,9 @@ const StatCard: React.FC<{ label: string; value: string; sub?: string; glow?: st
 
 export const Analytics: React.FC = () => {
   const { publicKey, connected } = useWallet()
+  const { tasks: all } = useTaskStore()
 
   const { clientStats, expertStats, categoryData, timelineData, global, leaderboard } = useMemo(() => {
-    const all = getAllTasks()
     const pk  = publicKey?.toBase58() ?? ''
 
     // Global stats
@@ -107,7 +108,7 @@ export const Analytics: React.FC = () => {
       timelineData,
       leaderboard,
     }
-  }, [publicKey])
+  }, [publicKey, all])
 
   if (!connected) return (
     <div className="page" style={{ textAlign: 'center', paddingTop: 100 }}>

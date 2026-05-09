@@ -4,7 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { getTask, acceptTask, releaseEscrow, raiseDispute, adminResolve, lamportsToSol, shortPubkey, explorerUrl, type Task, updateTask, deleteTask } from '../lib/contract'
+import { acceptTask, releaseEscrow, raiseDispute, adminResolve, lamportsToSol, shortPubkey, explorerUrl, type Task, updateTask, deleteTask } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 import { Discussion } from '../components/Discussion'
 import { useAI } from '../context/AIContext'
 import { useNotifications } from '../context/NotificationContext'
@@ -17,6 +18,7 @@ export const TaskDetail: React.FC = () => {
   const { connection }                = useConnection()
   const { logActivity }               = useAI()
   const { addNotification }           = useNotifications()
+  const { getTask, refresh }          = useTaskStore()
   const [task, setTask]               = useState<Task | null>(null)
   const [loading, setLoading]         = useState<string | null>(null)
   const [txMsg, setTxMsg]             = useState<{ sig: string; label: string } | null>(null)
@@ -30,7 +32,7 @@ export const TaskDetail: React.FC = () => {
       setTask(t)
       if (t) setEditForm({ title: t.title, description: t.description, category: t.category })
     }
-  }, [id])
+  }, [id, getTask])
   useEffect(() => { reload() }, [reload])
 
   if (!task) return (
@@ -58,6 +60,7 @@ export const TaskDetail: React.FC = () => {
       setTxMsg({ sig: signature, label: 'Task accepted!' })
       logActivity(`Task Accepted: ${task.title}`)
       addNotification('task_accepted', 'Task Accepted!', `You are now working on "${task.title}".`, task.id)
+      await refresh()
       reload()
     } catch (e: any) { setError(e.message)
     } finally { setLoading(null) }
@@ -73,6 +76,7 @@ export const TaskDetail: React.FC = () => {
       setTxMsg({ sig: signature, label: 'SOL successfully released via Smart Contract!' })
       logActivity(`Escrow Released for Task: ${task.title}`)
       addNotification('payment_released', 'Payment Released!', `◎ ${lamportsToSol(task.lamports).toFixed(3)} SOL sent to helper for "${task.title}".`, task.id)
+      await refresh()
       reload()
     } catch (e: any) {
       console.error(e)
@@ -89,6 +93,7 @@ export const TaskDetail: React.FC = () => {
       setTxMsg({ sig: signature, label: 'Dispute raised. Admin notified.' })
       logActivity(`Dispute Raised: ${task.title}`)
       addNotification('dispute_raised', 'Dispute Raised', `Admin has been notified about "${task.title}".`, task.id)
+      await refresh()
       reload()
     } catch (e: any) { setError(e.message) }
     finally { setLoading(null) }
@@ -101,6 +106,7 @@ export const TaskDetail: React.FC = () => {
       const { signature } = await adminResolve(wallet, connection, task.id, res)
       setTxMsg({ sig: signature, label: `Task successfully resolved via ${res}.` })
       logActivity(`Admin Resolution (${res}): ${task.title}`)
+      await refresh()
       reload()
     } catch (e: any) { setError(e.message) }
     finally { setLoading(null) }
@@ -121,6 +127,7 @@ export const TaskDetail: React.FC = () => {
     setLoading('delete'); setError('')
     try {
       deleteTask(task.id)
+      await refresh()
       navigate('/tasks')
     } catch (e: any) { setError(e.message) }
     finally { setLoading(null) }

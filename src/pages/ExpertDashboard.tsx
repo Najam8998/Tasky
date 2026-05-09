@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { getAllTasks, lamportsToSol, type Task } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 
 /* ── Reputation badge system ── */
 function getRank(completed: number): { label: string; color: string; next: number } {
@@ -20,21 +21,22 @@ export const ExpertDashboard: React.FC = () => {
   const [openTasks, setOpenTasks] = useState<Task[]>([])
   const [myJobs, setMyJobs] = useState<Task[]>([])
 
+  const { tasks: allTasks } = useTaskStore()
+
   useEffect(() => {
     if (publicKey) {
-      const all = getAllTasks()
       const pk = publicKey.toBase58()
       
       // Tasks I can accept (Open, not created by me)
-      setOpenTasks(all.filter(t => t.status === 'open' && t.creator !== pk).sort((a,b) => b.createdAt - a.createdAt))
+      setOpenTasks(allTasks.filter(t => t.status === 'open' && t.creator !== pk).sort((a,b) => b.createdAt - a.createdAt))
       
       // Tasks I am working on or have completed (Helper is me)
-      setMyJobs(all.filter(t => t.helper === pk).sort((a,b) => b.createdAt - a.createdAt))
+      setMyJobs(allTasks.filter(t => t.helper === pk).sort((a,b) => b.createdAt - a.createdAt))
     } else {
       setOpenTasks([])
       setMyJobs([])
     }
-  }, [publicKey])
+  }, [publicKey, allTasks])
 
   if (!connected) {
     return (

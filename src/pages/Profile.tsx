@@ -4,7 +4,8 @@
 import React, { useMemo } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { getAllTasks, lamportsToSol } from '../lib/contract'
+import { lamportsToSol } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 import { useAI } from '../context/AIContext'
 
 /* ── Reputation badge logic (shared with ExpertDashboard) ── */
@@ -19,14 +20,14 @@ function getRank(completed: number) {
 export const Profile: React.FC = () => {
   const { publicKey, connected } = useWallet()
   const { activities } = useAI()
+  const { tasks: allTasks } = useTaskStore()
 
   const stats = useMemo(() => {
     if (!publicKey) return null
-    const all = getAllTasks()
     const pk = publicKey.toBase58()
     
-    const clientTasks = all.filter(t => t.creator === pk)
-    const expertJobs  = all.filter(t => t.helper === pk)
+    const clientTasks = allTasks.filter(t => t.creator === pk)
+    const expertJobs  = allTasks.filter(t => t.helper === pk)
     
     const earned = expertJobs.filter(t => t.status === 'completed').reduce((a, t) => a + lamportsToSol(t.lamports), 0)
     const spent  = clientTasks.filter(t => t.status === 'completed').reduce((a, t) => a + lamportsToSol(t.lamports), 0)
@@ -38,7 +39,7 @@ export const Profile: React.FC = () => {
       active: expertJobs.filter(t => t.status === 'in_progress').length,
       posted: clientTasks.length
     }
-  }, [publicKey])
+  }, [publicKey, allTasks])
 
   if (!connected) return (
     <div className="page" style={{ textAlign: 'center', paddingTop: 100 }}>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { createTaskEscrow, solToLamports, explorerUrl } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 import { useAI } from '../context/AIContext'
 import { useNotifications } from '../context/NotificationContext'
 
@@ -14,6 +15,7 @@ export const CreateTask: React.FC = () => {
   const { connected, publicKey } = wallet
   const { connection } = useConnection()
   const navigate = useNavigate()
+  const { refresh } = useTaskStore()
   const { logActivity } = useAI()
   const { addNotification } = useNotifications()
   const [form, setForm] = useState({ title: '', description: '', category: 'Programming', sol: '0.1' })
@@ -42,6 +44,7 @@ export const CreateTask: React.FC = () => {
       setSuccess({ taskId, sig: signature })
       logActivity(`Task Created: ${form.title.trim()}`)
       addNotification('task_created', 'Task Published!', `"${form.title.trim()}" is live. SOL locked in escrow.`, taskId)
+      await refresh()
     } catch (err: any) { setError(err.message ?? 'Failed to create task.')
     } finally { setLoading(false) }
   }

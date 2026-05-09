@@ -6,18 +6,19 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { getAllTasks, lamportsToSol, type Task } from '../lib/contract'
+import { lamportsToSol, type Task } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 import { SolanaPriceChart } from '../components/SolanaPriceChart'
 
 export const Home: React.FC = () => {
   const { connected } = useWallet()
   const navigate = useNavigate()
+  const { tasks } = useTaskStore()
   const [stats, setStats] = useState({ total: 0, open: 0, solLocked: 0 })
   const [openTasks, setOpenTasks] = useState<Task[]>([])
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    const tasks = getAllTasks()
     const solLocked = tasks
       .filter(t => t.status === 'open' || t.status === 'in_progress')
       .reduce((acc, t) => acc + lamportsToSol(t.lamports), 0)
@@ -27,7 +28,7 @@ export const Home: React.FC = () => {
       solLocked,
     })
     setOpenTasks(tasks.filter(t => t.status === 'open').sort((a, b) => b.createdAt - a.createdAt))
-  }, [])
+  }, [tasks])
 
   const filteredTasks = openTasks.filter(t => 
     t.title.toLowerCase().includes(search.toLowerCase()) ||

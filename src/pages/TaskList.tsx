@@ -1,7 +1,8 @@
 // TaskList.tsx — Browse all tasks with filtering
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAllTasks, type Task, type TaskStatus } from '../lib/contract'
+import { type Task, type TaskStatus } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 import { TaskCard } from '../components/TaskCard'
 
 const FILTERS: { label: string; value: TaskStatus | 'all' }[] = [
@@ -13,11 +14,9 @@ const FILTERS: { label: string; value: TaskStatus | 'all' }[] = [
 
 export const TaskList: React.FC = () => {
   const navigate = useNavigate()
-  const [tasks, setTasks]   = useState<Task[]>([])
+  const { tasks }   = useTaskStore()
   const [filter, setFilter] = useState<TaskStatus | 'all'>('all')
   const [search, setSearch] = useState('')
-
-  useEffect(() => { setTasks(getAllTasks()) }, [])
 
   const filtered = tasks.filter(t => {
     const matchStatus = filter === 'all' || t.status === filter

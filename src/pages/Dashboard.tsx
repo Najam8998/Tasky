@@ -6,7 +6,8 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { getAllTasks, lamportsToSol, type Task, updateTask, deleteTask } from '../lib/contract'
+import { lamportsToSol, type Task, updateTask, deleteTask } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 
 /* ── Reputation badge system ── */
 function getRank(completed: number): { label: string; color: string; next: number } {
@@ -33,24 +34,25 @@ export const Dashboard: React.FC = () => {
   const [openTasks, setOpenTasks] = useState<Task[]>([])
   const [myJobs, setMyJobs]       = useState<Task[]>([])
 
+  const { tasks: allTasks, refresh } = useTaskStore()
+
   const loadData = () => {
     if (!publicKey) return
-    const all = getAllTasks()
     const pk  = publicKey.toBase58()
 
-    setMyPostedTasks(all.filter(t => t.creator === pk).sort((a, b) => b.createdAt - a.createdAt))
-    setMyJobs(all.filter(t => t.helper === pk).sort((a, b) => b.createdAt - a.createdAt))
-    setOpenTasks(all.filter(t => t.status === 'open' && t.creator !== pk).sort((a, b) => b.createdAt - a.createdAt))
+    setMyPostedTasks(allTasks.filter(t => t.creator === pk).sort((a, b) => b.createdAt - a.createdAt))
+    setMyJobs(allTasks.filter(t => t.helper === pk).sort((a, b) => b.createdAt - a.createdAt))
+    setOpenTasks(allTasks.filter(t => t.status === 'open' && t.creator !== pk).sort((a, b) => b.createdAt - a.createdAt))
   }
 
-  useEffect(() => { loadData() }, [publicKey])
+  useEffect(() => { loadData() }, [publicKey, allTasks])
 
   /* ── Client helpers ── */
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     if (window.confirm('Delete this task? This cannot be undone.')) {
       deleteTask(id)
-      loadData()
+      refresh()
     }
   }
   const startEdit = (e: React.MouseEvent, task: Task) => {
@@ -61,7 +63,7 @@ export const Dashboard: React.FC = () => {
   const saveEdit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingId) return
-    try { updateTask(editingId, editForm); setEditingId(null); loadData() }
+    try { updateTask(editingId, editForm); setEditingId(null); refresh() }
     catch (err: any) { alert(err.message) }
   }
 

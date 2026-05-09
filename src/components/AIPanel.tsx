@@ -3,7 +3,8 @@
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useAI } from '../context/AIContext';
-import { getAllTasks, lamportsToSol } from '../lib/contract';
+import { lamportsToSol, type Task } from '../lib/contract';
+import { useTaskStore } from '../context/TaskStoreContext';
 
 /* ── simulated live feed events ── */
 const FEED_TEMPLATES = [
@@ -16,7 +17,7 @@ const FEED_TEMPLATES = [
   (sol: string)              => `ESCROW: ◎${sol} still secured in PDA`,
 ];
 
-function buildFeedEvent(tasks: ReturnType<typeof getAllTasks>): string {
+function buildFeedEvent(tasks: Task[]): string {
   const t   = tasks[Math.floor(Math.random() * Math.max(tasks.length, 1))];
   const tpl = FEED_TEMPLATES[Math.floor(Math.random() * FEED_TEMPLATES.length)];
   const sol = t ? lamportsToSol(t.lamports).toFixed(3) : '0.100';
@@ -28,6 +29,7 @@ type Tab = 'analysis' | 'logs' | 'feed';
 
 export const AIPanel: React.FC = () => {
   const { activities, insight, isAnalyzing, aiSummary } = useAI();
+  const { tasks } = useTaskStore();
   const [isOpen, setIsOpen]   = useState(false);
   const [tab, setTab]         = useState<Tab>('analysis');
   const [feedLines, setFeedLines] = useState<{ text: string; ts: string }[]>([]);
@@ -35,7 +37,6 @@ export const AIPanel: React.FC = () => {
   // Live feed ticker
   useEffect(() => {
     if (!isOpen || tab !== 'feed') return;
-    const tasks = getAllTasks();
     const id = setInterval(() => {
       const text = buildFeedEvent(tasks);
       const ts   = new Date().toLocaleTimeString();
@@ -92,8 +93,8 @@ export const AIPanel: React.FC = () => {
             <div style={styles.sectionTitle}>SESSION STATS</div>
             <div style={styles.statsRow}>
               <div style={styles.statChip}><span style={{ color: '#14F195' }}>{activities.length}</span><br /><span style={{ fontSize: '0.6rem' }}>Events</span></div>
-              <div style={styles.statChip}><span style={{ color: '#14F195' }}>{getAllTasks().length}</span><br /><span style={{ fontSize: '0.6rem' }}>Tasks</span></div>
-              <div style={styles.statChip}><span style={{ color: '#14F195' }}>◎{getAllTasks().filter(t => t.status !== 'completed').reduce((a, t) => a + lamportsToSol(t.lamports), 0).toFixed(2)}</span><br /><span style={{ fontSize: '0.6rem' }}>Locked</span></div>
+              <div style={styles.statChip}><span style={{ color: '#14F195' }}>{tasks.length}</span><br /><span style={{ fontSize: '0.6rem' }}>Tasks</span></div>
+              <div style={styles.statChip}><span style={{ color: '#14F195' }}>◎{tasks.filter(t => t.status !== 'completed').reduce((a, t) => a + lamportsToSol(t.lamports), 0).toFixed(2)}</span><br /><span style={{ fontSize: '0.6rem' }}>Locked</span></div>
             </div>
           </div>
         )}

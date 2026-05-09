@@ -4,7 +4,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAllTasks, lamportsToSol, type Task } from '../lib/contract'
+import { lamportsToSol, type Task } from '../lib/contract'
+import { useTaskStore } from '../context/TaskStoreContext'
 
 const ADMIN_KEY = 'tasky_admin_2024'
 
@@ -84,8 +85,8 @@ const AdminGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
-  const [authed, setAuthed] = useState(false)
-  const [tasks, setTasks]   = useState<Task[]>([])
+  const { tasks: chainTasks } = useTaskStore()
+  const [tasks, setTasks] = useState<Task[]>([])
 
   useEffect(() => {
     // Check URL key or session
@@ -97,9 +98,9 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     if (authed) {
-      setTasks(getAllTasks().sort((a, b) => b.createdAt - a.createdAt))
+      setTasks([...chainTasks].sort((a, b) => b.createdAt - a.createdAt))
     }
-  }, [authed])
+  }, [authed, chainTasks])
 
   if (!authed) return <AdminGate onUnlock={() => setAuthed(true)} />
 
