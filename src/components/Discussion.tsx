@@ -27,7 +27,11 @@ export const Discussion: React.FC<Props> = ({ taskId, walletPubkey }) => {
   const { summarizeChat }       = useAI()
 
   const storageKey = `tasky_chat_${taskId}`
-  const gun = useRef(Gun(['https://gun-manhattan.herokuapp.com/gun']))
+  const gun = useRef(Gun([
+    'https://relay.peer.ooo/gun',
+    'https://gun-manhattan.herokuapp.com/gun',
+    'https://peer.wallie.io/gun'
+  ]))
 
   useEffect(() => {
     // Listen for incoming messages on this specific task's node
@@ -56,6 +60,12 @@ export const Discussion: React.FC<Props> = ({ taskId, walletPubkey }) => {
       timestamp: Date.now(),
     }
     
+    // Optimistically update UI so the sender sees it instantly
+    setMessages(prev => {
+      if (prev.some(m => m.id === msg.id)) return prev
+      return [...prev, msg].sort((a, b) => a.timestamp - b.timestamp)
+    })
+
     // Save to Gun decentralized network
     gun.current.get(storageKey).get(msg.id).put(msg)
     setInput('')
