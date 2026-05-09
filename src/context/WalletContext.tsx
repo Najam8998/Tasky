@@ -7,7 +7,7 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
-import { SolanaMobileWalletAdapter, createDefaultAddressSelector, createDefaultAuthorizationStrategy, createDefaultWalletNotFoundHandler } from '@solana-mobile/wallet-adapter-mobile'
+import { SolanaMobileWalletAdapter, createDefaultAddressSelector, createDefaultAuthorizationResultCache, createDefaultWalletNotFoundHandler } from '@solana-mobile/wallet-adapter-mobile'
 import { clusterApiUrl } from '@solana/web3.js'
 
 // Import default wallet adapter styles
@@ -28,7 +28,7 @@ export const WalletContextProvider: FC<Props> = ({ children }) => {
         uri: 'https://tasky.example.com',
         icon: 'favicon.ico',
       },
-      authorizationStrategy: createDefaultAuthorizationStrategy(),
+      authorizationResultCache: createDefaultAuthorizationResultCache(),
       cluster: 'devnet',
       onWalletNotFound: createDefaultWalletNotFoundHandler(),
     }),
