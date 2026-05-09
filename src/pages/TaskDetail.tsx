@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { acceptTask, releaseEscrow, raiseDispute, adminResolve, lamportsToSol, shortPubkey, explorerUrl, type Task } from '../lib/contract'
+import { acceptTask, releaseEscrow, raiseDispute, adminResolve, lamportsToSol, shortPubkey, explorerUrl, cancelTask, editTask, type Task } from '../lib/contract'
 import { useTaskStore } from '../context/TaskStoreContext'
 import { Discussion } from '../components/Discussion'
 import { useAI } from '../context/AIContext'
@@ -23,10 +23,14 @@ export const TaskDetail: React.FC = () => {
   const [loading, setLoading]         = useState<string | null>(null)
   const [txMsg, setTxMsg]             = useState<{ sig: string; label: string } | null>(null)
   const [error, setError]             = useState('')
+  const [editing, setEditing]         = useState(false)
+  const [editForm, setEditForm]       = useState({ title: '', description: '', category: '' })
+
   const reload = useCallback(() => { 
     if (id) {
       const t = getTask(id)
       setTask(t)
+      if (t) setEditForm({ title: t.title, description: t.description, category: t.category })
     }
   }, [id, getTask])
   useEffect(() => { reload() }, [reload])
@@ -108,7 +112,31 @@ export const TaskDetail: React.FC = () => {
     finally { setLoading(null) }
   }
 
+  const handleUpdate = async () => {
+    setLoading('update'); setError('')
+    try {
+      const { signature } = await editTask(wallet, connection, task, editForm.title, editForm.description, editForm.category)
+      setTxMsg({ sig: signature, label: 'Task updated on blockchain.' })
+      logActivity(`Task Edited: ${task.title}`)
+      setEditing(false)
+      await refresh()
+      reload()
+    } catch (e: any) { setError(e.message) }
+    finally { setLoading(null) }
+  }
 
+  const handleCancelTask = async () => {
+    if (!window.confirm("Cancel this task and refund your SOL? This cannot be undone.")) return
+    setLoading('cancel'); setError('')
+    try {
+      const { signature } = await cancelTask(wallet, connection, task)
+      setTxMsg({ sig: signature, label: 'Task cancelled. SOL refunded.' })
+      logActivity(`Task Cancelled: ${task.title}`)
+      await refresh()
+      navigate('/tasks')
+    } catch (e: any) { setError(e.message) }
+    finally { setLoading(null) }
+  }
 
   const sol = lamportsToSol(task.lamports)
   const statusColor = { open:'#14F195', in_progress:'#ffaa44', completed:'#9945FF', cancelled:'#ff6060', disputed:'#ff4444' }[task.status]
@@ -278,10 +306,36 @@ export const TaskDetail: React.FC = () => {
 
           {isOpen && isClient && (
             <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:'32px 24px', textAlign:'center' }}>
+              {editing ? (
+                <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <h3 style={{ color: '#e0ffe8', margin: 0 }}>Edit Task Details</h3>
+                  <div className="form-group">
+                    <label className="form-label">Task Title</label>
+                    <input className="form-input" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Description</label>
+                    <textarea className="form-input" rows={4} value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button className="btn btn-primary" onClick={handleUpdate} disabled={loading === 'update'} style={{ flex: 1 }}>
+                      {loading === 'update' ? 'Saving to Blockchain...' : 'Save Changes'}
+                    </button>
+                    <button className="btn btn-outline" onClick={() => setEditing(false)} disabled={loading === 'update'} style={{ flex: 1 }}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
                 <>
                   <h3 style={{ color:'#e0ffe8', fontSize:'1.2rem', marginBottom:8 }}>Waiting for an Expert</h3>
-                  <p style={{ color:'#5a8a70', fontSize:'0.9rem', marginBottom:24 }}>No one has accepted your task yet. The task is secured on the Solana blockchain.</p>
+                  <p style={{ color:'#5a8a70', fontSize:'0.9rem', marginBottom:24 }}>No one has accepted your task yet. You can still modify the details or cancel it for a full refund.</p>
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                    <button className="btn btn-outline" onClick={() => setEditing(true)} style={{ padding: '10px 24px' }}>Edit Task</button>
+                    <button className="btn btn-ghost" onClick={handleCancelTask} disabled={loading === 'cancel'} style={{ color: '#ff6060' }}>
+                      {loading === 'cancel' ? 'Cancelling...' : 'Cancel Task & Refund SOL'}
+                    </button>
+                  </div>
                 </>
+              )}
             </div>
           )}
         </div>

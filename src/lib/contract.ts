@@ -172,6 +172,53 @@ export async function acceptTask(
   return { signature };
 }
 
+export async function cancelTask(
+  wallet: any,
+  connection: Connection,
+  task: Task
+): Promise<{ signature: string }> {
+  const program = getProgram(wallet, connection);
+  if (task.status !== 'open') throw new Error('Task must be open to cancel and refund');
+  if (task.creator !== wallet.publicKey.toBase58()) throw new Error('Only the creator can cancel this task');
+
+  let signature: string
+  try {
+    signature = await program.methods.cancelTask().accounts({
+      task: new PublicKey(task.escrowPda),
+      creator: wallet.publicKey,
+    }).rpc()
+  } catch (e: any) {
+    throw new Error(parseRpcError(e))
+  }
+
+  return { signature };
+}
+
+export async function editTask(
+  wallet: any,
+  connection: Connection,
+  task: Task,
+  title: string,
+  description: string,
+  category: string
+): Promise<{ signature: string }> {
+  const program = getProgram(wallet, connection);
+  if (task.status !== 'open') throw new Error('Task must be open to edit');
+  if (task.creator !== wallet.publicKey.toBase58()) throw new Error('Only the creator can edit this task');
+
+  let signature: string
+  try {
+    signature = await program.methods.editTask(title, description, category).accounts({
+      task: new PublicKey(task.escrowPda),
+      creator: wallet.publicKey,
+    }).rpc()
+  } catch (e: any) {
+    throw new Error(parseRpcError(e))
+  }
+
+  return { signature };
+}
+
 export async function releaseEscrow(
   wallet: any,
   connection: Connection,

@@ -105,6 +105,39 @@ pub mod tasky {
 
         Ok(())
     }
+
+    pub fn cancel_task(ctx: Context<CancelTask>) -> Result<()> {
+        let task = &mut ctx.accounts.task;
+        require!(task.status == 0, ErrorCode::InvalidStatus); // Must be Open
+        require!(task.creator == *ctx.accounts.creator.key, ErrorCode::Unauthorized);
+
+        task.status = 3; // 3: Cancelled
+        task.completed_at = Clock::get()?.unix_timestamp;
+
+        // Refund SOL to creator
+        let lamports = task.lamports;
+        **task.to_account_info().try_borrow_mut_lamports()? -= lamports;
+        **ctx.accounts.creator.try_borrow_mut_lamports()? += lamports;
+
+        Ok(())
+    }
+
+    pub fn edit_task(
+        ctx: Context<EditTask>,
+        title: String,
+        description: String,
+        category: String,
+    ) -> Result<()> {
+        let task = &mut ctx.accounts.task;
+        require!(task.status == 0, ErrorCode::InvalidStatus); // Must be Open
+        require!(task.creator == *ctx.accounts.creator.key, ErrorCode::Unauthorized);
+
+        task.title = title;
+        task.description = description;
+        task.category = category;
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -160,6 +193,21 @@ pub struct AdminResolve<'info> {
     /// CHECK: Target for release
     #[account(mut, address = task.helper)]
     pub helper: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CancelTask<'info> {
+    #[account(mut, has_one = creator)]
+    pub task: Account<'info, TaskAccount>,
+    #[account(mut)]
+    pub creator: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct EditTask<'info> {
+    #[account(mut, has_one = creator)]
+    pub task: Account<'info, TaskAccount>,
+    pub creator: Signer<'info>,
 }
 
 #[account]

@@ -3,6 +3,7 @@
 // ============================================================
 
 import React, { useState, useEffect, useRef } from 'react'
+import Gun from 'gun'
 import { shortPubkey } from '../lib/contract'
 import { useAI } from '../context/AIContext'
 
@@ -26,10 +27,20 @@ export const Discussion: React.FC<Props> = ({ taskId, walletPubkey }) => {
   const { summarizeChat }       = useAI()
 
   const storageKey = `tasky_chat_${taskId}`
+  const gun = useRef(Gun(['https://gun-manhattan.herokuapp.com/gun']))
 
   useEffect(() => {
-    const stored = localStorage.getItem(storageKey)
-    if (stored) setMessages(JSON.parse(stored))
+    // Listen for incoming messages on this specific task's node
+    const messagesNode = gun.current.get(storageKey)
+    messagesNode.map().on((msgData: any) => {
+      if (msgData && msgData.text) {
+        setMessages(prev => {
+          // Avoid duplicates
+          if (prev.some(m => m.id === msgData.id)) return prev
+          return [...prev, msgData].sort((a, b) => a.timestamp - b.timestamp)
+        })
+      }
+    })
   }, [taskId])
 
   useEffect(() => {
@@ -44,9 +55,9 @@ export const Discussion: React.FC<Props> = ({ taskId, walletPubkey }) => {
       text: input.trim(),
       timestamp: Date.now(),
     }
-    const updated = [...messages, msg]
-    setMessages(updated)
-    localStorage.setItem(storageKey, JSON.stringify(updated))
+    
+    // Save to Gun decentralized network
+    gun.current.get(storageKey).get(msg.id).put(msg)
     setInput('')
   }
 
