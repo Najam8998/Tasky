@@ -18,6 +18,17 @@ interface Props {
 }
 
 class CustomPhantomWalletAdapter extends PhantomWalletAdapter {
+  get readyState() {
+    const state = super.readyState;
+    if (state === WalletReadyState.NotDetected && typeof navigator !== 'undefined') {
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      if (isAndroid) {
+        return WalletReadyState.Loadable;
+      }
+    }
+    return state;
+  }
+
   async connect() {
     if (this.readyState === WalletReadyState.Loadable) {
       const isAndroid = /Android/i.test(navigator.userAgent);
