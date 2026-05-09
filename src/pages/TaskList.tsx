@@ -1,7 +1,7 @@
 // TaskList.tsx — Browse all tasks with filtering
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { type Task, type TaskStatus } from '../lib/contract'
+import { type TaskStatus } from '../lib/contract'
 import { useTaskStore } from '../context/TaskStoreContext'
 import { TaskCard } from '../components/TaskCard'
 

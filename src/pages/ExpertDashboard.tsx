@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { getAllTasks, lamportsToSol, type Task } from '../lib/contract'
+import { lamportsToSol, type Task } from '../lib/contract'
 import { useTaskStore } from '../context/TaskStoreContext'
 
 /* ── Reputation badge system ── */

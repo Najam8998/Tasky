@@ -85,6 +85,7 @@ const AdminGate: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
+  const [authed, setAuthed] = useState(false)
   const { tasks: chainTasks } = useTaskStore()
   const [tasks, setTasks] = useState<Task[]>([])
 
