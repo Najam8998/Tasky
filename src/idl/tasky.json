@@ -65,7 +65,7 @@
     },
     {
       "name": "cancelTask",
-      "discriminator": [181, 246, 173, 223, 31, 201, 102, 102],
+      "discriminator": [69, 228, 134, 187, 134, 105, 238, 48],
       "accounts": [
         { "name": "task", "writable": true, "signer": false },
         { "name": "creator", "writable": true, "signer": true }
@@ -74,7 +74,7 @@
     },
     {
       "name": "editTask",
-      "discriminator": [121, 150, 152, 214, 255, 186, 192, 19],
+      "discriminator": [35, 78, 246, 22, 81, 157, 27, 58],
       "accounts": [
         { "name": "task", "writable": true, "signer": false },
         { "name": "creator", "writable": false, "signer": true }
