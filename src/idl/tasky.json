@@ -1,0 +1,106 @@
+{
+  "address": "EMwmJTWq7cCVFuMY1UK77DPmVJAkyqmGwGGMh39NTESQ",
+  "metadata": {
+    "name": "tasky",
+    "version": "0.1.0",
+    "spec": "0.1.0"
+  },
+  "instructions": [
+    {
+      "name": "createTask",
+      "discriminator": [194, 80, 6, 180, 232, 127, 48, 171],
+      "accounts": [
+        { "name": "task", "writable": true, "signer": false },
+        { "name": "creator", "writable": true, "signer": true },
+        { "name": "systemProgram", "writable": false, "signer": false }
+      ],
+      "args": [
+        { "name": "taskId", "type": "string" },
+        { "name": "title", "type": "string" },
+        { "name": "description", "type": "string" },
+        { "name": "category", "type": "string" },
+        { "name": "lamports", "type": "u64" }
+      ]
+    },
+    {
+      "name": "acceptTask",
+      "discriminator": [222, 196, 79, 165, 120, 30, 38, 120],
+      "accounts": [
+        { "name": "task", "writable": true, "signer": false },
+        { "name": "helper", "writable": true, "signer": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "releaseFunds",
+      "discriminator": [225, 88, 91, 108, 126, 52, 2, 26],
+      "accounts": [
+        { "name": "task", "writable": true, "signer": false },
+        { "name": "creator", "writable": true, "signer": true },
+        { "name": "helper", "writable": true, "signer": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "raiseDispute",
+      "discriminator": [41, 243, 1, 51, 150, 95, 246, 73],
+      "accounts": [
+        { "name": "task", "writable": true, "signer": false },
+        { "name": "signer", "writable": false, "signer": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "adminResolve",
+      "discriminator": [90, 215, 29, 95, 17, 61, 118, 229],
+      "accounts": [
+        { "name": "task", "writable": true, "signer": false },
+        { "name": "admin", "writable": false, "signer": true },
+        { "name": "creator", "writable": true, "signer": false },
+        { "name": "helper", "writable": true, "signer": false }
+      ],
+      "args": [
+        { "name": "releaseToHelper", "type": "bool" }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "TaskAccount",
+      "discriminator": [235, 32, 10, 23, 81, 60, 170, 203]
+    }
+  ],
+  "types": [
+    {
+      "name": "TaskAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator", "type": "pubkey" },
+          { "name": "helper", "type": "pubkey" },
+          { "name": "status", "type": "u8" },
+          { "name": "lamports", "type": "u64" },
+          { "name": "createdAt", "type": "i64" },
+          { "name": "acceptedAt", "type": "i64" },
+          { "name": "completedAt", "type": "i64" },
+          { "name": "taskId", "type": "string" },
+          { "name": "title", "type": "string" },
+          { "name": "description", "type": "string" },
+          { "name": "category", "type": "string" }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidStatus",
+      "msg": "Invalid task status for this operation."
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "Unauthorized access."
+    }
+  ]
+}

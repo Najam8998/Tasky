@@ -1,0 +1,39 @@
+{
+  "name": "Tasky — Solana Academic Marketplace",
+  "short_name": "Tasky",
+  "description": "Decentralized academic task marketplace powered by Solana. Post tasks, pay in SOL, get expert help.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#010a04",
+  "theme_color": "#14F195",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/tasky-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "finance", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Browse Tasks",
+      "short_name": "Marketplace",
+      "description": "Browse open tasks on the marketplace",
+      "url": "/expert"
+    },
+    {
+      "name": "Post a Task",
+      "short_name": "Post Task",
+      "description": "Create a new task and lock SOL in escrow",
+      "url": "/create"
+    },
+    {
+      "name": "Analytics",
+      "short_name": "Analytics",
+      "description": "View your SOL earnings and spending",
+      "url": "/analytics"
+    }
+  ]
+}
