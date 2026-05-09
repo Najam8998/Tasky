@@ -3,7 +3,6 @@
 // ============================================================
 
 import React, { useState, useEffect, useRef } from 'react'
-import Gun from 'gun'
 import { shortPubkey } from '../lib/contract'
 import { useAI } from '../context/AIContext'
 
@@ -26,32 +25,63 @@ export const Discussion: React.FC<Props> = ({ taskId, walletPubkey }) => {
   const bottomRef               = useRef<HTMLDivElement>(null)
   const { summarizeChat }       = useAI()
 
-  const storageKey = `tasky_chat_${taskId}`
-  const gun = useRef(Gun([
-    'https://relay.peer.ooo/gun',
-    'https://gun-manhattan.herokuapp.com/gun',
-    'https://peer.wallie.io/gun'
-  ]))
+  const topicUrl = `https://ntfy.sh/tasky_chat_${taskId}`
 
+  // Load history and setup SSE listener for live updates
   useEffect(() => {
-    // Listen for incoming messages on this specific task's node
-    const messagesNode = gun.current.get(storageKey)
-    messagesNode.map().on((msgData: any) => {
-      if (msgData && msgData.text) {
-        setMessages(prev => {
-          // Avoid duplicates
-          if (prev.some(m => m.id === msgData.id)) return prev
-          return [...prev, msgData].sort((a, b) => a.timestamp - b.timestamp)
-        })
-      }
-    })
+    let active = true
+
+    const loadHistory = async () => {
+      try {
+        const res = await fetch(`${topicUrl}/json?poll=1&since=24h`)
+        const text = await res.text()
+        const evts = text.split('\n').filter(Boolean).map(line => JSON.parse(line))
+        
+        const historyMsgs: Message[] = []
+        for (const e of evts) {
+          if (e.event === 'message' && e.message) {
+            try { historyMsgs.push(JSON.parse(e.message)) } catch {}
+          }
+        }
+        if (active) {
+          setMessages(prev => {
+            const merged = [...prev, ...historyMsgs]
+            const unique = Array.from(new Map(merged.map(m => [m.id, m])).values())
+            return unique.sort((a, b) => a.timestamp - b.timestamp)
+          })
+        }
+      } catch (err) { console.error('Failed to load chat history', err) }
+    }
+
+    loadHistory()
+
+    const sse = new EventSource(`${topicUrl}/sse`)
+    sse.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data)
+        if (data.event === 'message' && data.message) {
+          const msg = JSON.parse(data.message) as Message
+          if (msg.id && msg.text) {
+            setMessages(prev => {
+              if (prev.some(m => m.id === msg.id)) return prev
+              return [...prev, msg].sort((a, b) => a.timestamp - b.timestamp)
+            })
+          }
+        }
+      } catch (err) {}
+    }
+
+    return () => {
+      active = false
+      sse.close()
+    }
   }, [taskId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const send = () => {
+  const send = async () => {
     if (!input.trim() || !walletPubkey) return
     const msg: Message = {
       id: `${Date.now()}_${Math.random()}`,
@@ -65,10 +95,17 @@ export const Discussion: React.FC<Props> = ({ taskId, walletPubkey }) => {
       if (prev.some(m => m.id === msg.id)) return prev
       return [...prev, msg].sort((a, b) => a.timestamp - b.timestamp)
     })
-
-    // Save to Gun decentralized network
-    gun.current.get(storageKey).get(msg.id).put(msg)
     setInput('')
+
+    // Post to decentralized ntfy topic
+    try {
+      await fetch(topicUrl, {
+        method: 'POST',
+        body: JSON.stringify(msg)
+      })
+    } catch (err) {
+      console.error('Failed to send message', err)
+    }
   }
 
   return (
