@@ -7,6 +7,7 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
+import { SolanaMobileWalletAdapter, createDefaultAddressSelector, createDefaultAuthorizationStrategy, createDefaultWalletNotFoundHandler } from '@solana-mobile/wallet-adapter-mobile'
 import { clusterApiUrl } from '@solana/web3.js'
 
 // Import default wallet adapter styles
@@ -19,7 +20,20 @@ interface Props {
 export const WalletContextProvider: FC<Props> = ({ children }) => {
   const network  = WalletAdapterNetwork.Devnet
   const endpoint = useMemo(() => clusterApiUrl(network), [network])
-  const wallets  = useMemo(() => [new PhantomWalletAdapter()], [network])
+  const wallets  = useMemo(() => [
+    new SolanaMobileWalletAdapter({
+      addressSelector: createDefaultAddressSelector(),
+      appIdentity: {
+        name: 'Tasky',
+        uri: 'https://tasky.example.com',
+        icon: 'favicon.ico',
+      },
+      authorizationStrategy: createDefaultAuthorizationStrategy(),
+      cluster: 'devnet',
+      onWalletNotFound: createDefaultWalletNotFoundHandler(),
+    }),
+    new PhantomWalletAdapter()
+  ], [network])
 
   return (
     <ConnectionProvider endpoint={endpoint}>
