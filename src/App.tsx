@@ -29,11 +29,21 @@ function App() {
                 {/* Legacy redirects — old links still work */}
                 <Route path="/client"      element={<Navigate to="/dashboard" replace />} />
                 <Route path="/expert"      element={<Navigate to="/dashboard" replace />} />
+                <Route path="/tasks"       element={<Navigate to="/dashboard" replace />} />
                 <Route path="/create"      element={<CreateTask />} />
                 <Route path="/admin"       element={<AdminDashboard />} />
                 <Route path="/tasks/:id"   element={<TaskDetail />} />
                 <Route path="/analytics"   element={<Analytics />} />
                 <Route path="/profile"     element={<Profile />} />
+                {/* 404 catch-all */}
+                <Route path="*" element={
+                  <div className="page" style={{ textAlign: 'center', paddingTop: 120 }}>
+                    <div style={{ fontSize: '5rem', fontFamily: "'Share Tech Mono', monospace", color: '#14F195', marginBottom: 16 }}>404</div>
+                    <h2 style={{ color: '#e0ffe8', marginBottom: 12 }}>Page not found</h2>
+                    <p style={{ color: '#8888aa', marginBottom: 32 }}>This route doesn't exist. Head back to safety.</p>
+                    <Navigate to="/" replace />
+                  </div>
+                } />
               </Routes>
             </div>
             <AIPanel />

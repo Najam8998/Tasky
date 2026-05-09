@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <rect width="500" height="500" fill="#010a04" />
+  
+  <!-- Outer glowing circle -->
+  <circle cx="250" cy="250" r="160" fill="none" stroke="#14F195" stroke-width="24" opacity="0.8" filter="drop-shadow(0 0 20px #14F195)" />
+  
+  <!-- Inner circle -->
+  <circle cx="250" cy="250" r="90" fill="none" stroke="#14F195" stroke-width="24" filter="drop-shadow(0 0 10px #14F195)" />
+  
+  <!-- Center dot -->
+  <circle cx="250" cy="250" r="30" fill="#14F195" filter="drop-shadow(0 0 15px #14F195)" />
+</svg>

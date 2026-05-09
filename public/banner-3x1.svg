@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+  <!-- Dark background with subtle gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#010a04" />
+      <stop offset="100%" stop-color="#031f0f" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="400" fill="url(#bg)" />
+
+  <!-- Logo Icon -->
+  <g transform="translate(300, 200)">
+    <!-- Outer glowing circle -->
+    <circle cx="-60" cy="-10" r="70" fill="none" stroke="#14F195" stroke-width="12" opacity="0.8" filter="drop-shadow(0 0 15px #14F195)" />
+    <!-- Inner circle -->
+    <circle cx="-60" cy="-10" r="40" fill="none" stroke="#14F195" stroke-width="12" filter="drop-shadow(0 0 8px #14F195)" />
+    <!-- Center dot -->
+    <circle cx="-60" cy="-10" r="14" fill="#14F195" filter="drop-shadow(0 0 10px #14F195)" />
+  </g>
+
+  <!-- Logo Text -->
+  <text x="500" y="240" font-family="'Share Tech Mono', monospace, sans-serif" font-size="140" font-weight="800" fill="#ffffff" letter-spacing="-0.03em" filter="drop-shadow(0 0 20px rgba(20,241,149,0.5))">Tasky</text>
+  
+  <!-- Subtle DEVNET badge -->
+  <rect x="880" y="140" width="140" height="40" rx="8" fill="rgba(20,241,149,0.1)" stroke="#14F195" stroke-width="2" />
+  <text x="950" y="165" font-family="'Share Tech Mono', monospace, sans-serif" font-size="20" font-weight="800" fill="#14F195" text-anchor="middle" letter-spacing="0.1em">DEVNET</text>
+
+  <!-- Subtitle -->
+  <text x="505" y="295" font-family="'Inter', sans-serif" font-size="28" font-weight="500" fill="#14F195" letter-spacing="0.1em" opacity="0.9">TRUSTLESS ACADEMIC MARKETPLACE</text>
+</svg>

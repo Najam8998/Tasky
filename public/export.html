@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Export Tasky Images</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    body { background: #010a04; color: #14F195; font-family: 'Inter', sans-serif; padding: 40px; text-align: center; }
+    h1 { font-family: 'Share Tech Mono', monospace; }
+  </style>
+</head>
+<body>
+  <h1>Converting SVGs to PNG...</h1>
+  <p>Please wait. The PNG files should automatically download to your computer.</p>
+  <div id="status"></div>
+
+  <script>
+    async function svgToPng(svgUrl, filename, width, height) {
+      // Fetch the SVG text
+      const response = await fetch(svgUrl);
+      const svgText = await response.text();
+
+      // Create a blob URL for the SVG
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      const DOMURL = window.URL || window.webkitURL || window;
+      const url = DOMURL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.width = width;
+      img.height = height;
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        img.src = url;
+      });
+
+      // Draw to canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      DOMURL.revokeObjectURL(url);
+
+      // Trigger download
+      const pngDataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = pngDataUrl;
+      link.click();
+    }
+
+    // Wait for the Google Fonts to load before drawing so the banner text looks correct
+    document.fonts.ready.then(async () => {
+      try {
+        await svgToPng('/logo-1x1.svg', 'Tasky_Logo.png', 500, 500);
+        
+        // Slight delay so the browser doesn't block the second download
+        setTimeout(async () => {
+          await svgToPng('/banner-3x1.svg', 'Tasky_Banner.png', 1200, 400);
+          document.getElementById('status').innerHTML = '<h2>✅ Success! Check your Downloads folder!</h2><p>You can now safely close this tab.</p>';
+        }, 1000);
+      } catch (err) {
+        document.getElementById('status').innerHTML = '<h2 style="color:red">❌ Export failed</h2><p>' + err.message + '</p>';
+      }
+    });
+  </script>
+</body>
+</html>
