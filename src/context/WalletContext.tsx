@@ -4,7 +4,7 @@
 
 import { type FC, type ReactNode, useMemo } from 'react'
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
+import { WalletAdapterNetwork, WalletReadyState } from '@solana/wallet-adapter-base'
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
 import { SolanaMobileWalletAdapter, createDefaultAddressSelector, createDefaultAuthorizationResultCache, createDefaultWalletNotFoundHandler } from '@solana-mobile/wallet-adapter-mobile'
@@ -15,6 +15,23 @@ import '@solana/wallet-adapter-react-ui/styles.css'
 
 interface Props {
   children: ReactNode
+}
+
+class CustomPhantomWalletAdapter extends PhantomWalletAdapter {
+  async connect() {
+    if (this.readyState === WalletReadyState.Loadable) {
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      if (isAndroid) {
+        const url = encodeURIComponent(window.location.href);
+        const ref = encodeURIComponent(window.location.origin);
+        // Using Android Intent to force opening the app or fallback to Play Store
+        const intentUrl = `intent://browse/${url}?ref=${ref}#Intent;scheme=phantom;package=app.phantom;S.browser_fallback_url=${encodeURIComponent('https://play.google.com/store/apps/details?id=app.phantom')};end`;
+        window.location.href = intentUrl;
+        return;
+      }
+    }
+    return super.connect();
+  }
 }
 
 export const WalletContextProvider: FC<Props> = ({ children }) => {
@@ -32,7 +49,7 @@ export const WalletContextProvider: FC<Props> = ({ children }) => {
       cluster: 'devnet',
       onWalletNotFound: createDefaultWalletNotFoundHandler(),
     }),
-    new PhantomWalletAdapter()
+    new CustomPhantomWalletAdapter()
   ], [network])
 
   return (
