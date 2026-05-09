@@ -6,14 +6,12 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { getAllTasks, lamportsToSol, type Task, updateTask, deleteTask } from '../lib/contract'
+import { getAllTasks, lamportsToSol, type Task } from '../lib/contract'
 
 export const ClientDashboard: React.FC = () => {
   const { publicKey, connected } = useWallet()
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<Task[]>([])
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ title: '', description: '', category: '' })
 
   const loadTasks = () => {
     if (publicKey) {
@@ -26,31 +24,7 @@ export const ClientDashboard: React.FC = () => {
     loadTasks()
   }, [publicKey])
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation()
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      deleteTask(id)
-      loadTasks()
-    }
-  }
 
-  const startEdit = (e: React.MouseEvent, task: Task) => {
-    e.stopPropagation()
-    setEditingId(task.id)
-    setEditForm({ title: task.title, description: task.description, category: task.category })
-  }
-
-  const saveEdit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingId) return
-    try {
-      updateTask(editingId, editForm)
-      setEditingId(null)
-      loadTasks()
-    } catch (err: any) {
-      alert(err.message)
-    }
-  }
 
   if (!connected) {
     return (
@@ -119,20 +93,8 @@ export const ClientDashboard: React.FC = () => {
                const sol = lamportsToSol(task.lamports)
                const isIP = task.status === 'in_progress'
                const isOpen = task.status === 'open'
-               const isEditing = editingId === task.id
-               
                return (
-                 <div key={task.id} className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, cursor: isEditing ? 'default' : 'pointer', transition: 'all 0.2s' }} onClick={() => !isEditing && navigate(`/tasks/${task.id}`)}>
-                    {isEditing ? (
-                      <form onSubmit={saveEdit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <input className="form-input" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} placeholder="Title" required />
-                        <textarea className="form-input" value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} placeholder="Description" rows={3} required />
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button className="btn btn-primary" type="submit" style={{ flex: 1 }}>Save Changes</button>
-                          <button className="btn btn-outline" type="button" onClick={() => setEditingId(null)} style={{ flex: 1 }}>Cancel</button>
-                        </div>
-                      </form>
-                    ) : (
+                 <div key={task.id} className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => navigate(`/tasks/${task.id}`)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                          <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -147,17 +109,12 @@ export const ClientDashboard: React.FC = () => {
                             <h3 style={{ color: '#e0ffe8', fontSize: '1.2rem', margin: 0 }}>{task.title}</h3>
                          </div>
                          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                               {isOpen && <button className="btn-text" onClick={(e) => startEdit(e, task)} style={{ background:'none', border:'none', color:'#14F195', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', cursor:'pointer', padding:0 }}>Edit</button>}
-                               <button className="btn-text" onClick={(e) => handleDelete(e, task.id)} style={{ background:'none', border:'none', color:'#ff6060', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', cursor:'pointer', padding:0 }}>Delete</button>
-                            </div>
                             <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#14F195' }}>◎ {sol.toFixed(3)}</div>
                          </div>
                       </div>
-                    )}
                     
                     {/* Action Prompts based on status */}
-                    {isOpen && !isEditing && (
+                    {isOpen && (
                        <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: '0.85rem', color: '#5a8a70', display: 'flex', alignItems: 'center', gap: 8 }}>
                           Waiting for an expert to accept...
                        </div>

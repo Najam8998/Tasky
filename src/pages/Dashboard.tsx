@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { lamportsToSol, type Task, updateTask, deleteTask } from '../lib/contract'
+import { lamportsToSol, type Task } from '../lib/contract'
 import { useTaskStore } from '../context/TaskStoreContext'
 
 /* ── Reputation badge system ── */
@@ -27,14 +27,12 @@ export const Dashboard: React.FC = () => {
 
   // Client state
   const [myPostedTasks, setMyPostedTasks] = useState<Task[]>([])
-  const [editingId, setEditingId]         = useState<string | null>(null)
-  const [editForm, setEditForm]           = useState({ title: '', description: '', category: '' })
 
   // Expert state
   const [openTasks, setOpenTasks] = useState<Task[]>([])
   const [myJobs, setMyJobs]       = useState<Task[]>([])
 
-  const { tasks: allTasks, refresh } = useTaskStore()
+  const { tasks: allTasks } = useTaskStore()
 
   const loadData = () => {
     if (!publicKey) return
@@ -47,25 +45,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => { loadData() }, [publicKey, allTasks])
 
-  /* ── Client helpers ── */
-  const handleDelete = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation()
-    if (window.confirm('Delete this task? This cannot be undone.')) {
-      deleteTask(id)
-      refresh()
-    }
-  }
-  const startEdit = (e: React.MouseEvent, task: Task) => {
-    e.stopPropagation()
-    setEditingId(task.id)
-    setEditForm({ title: task.title, description: task.description, category: task.category })
-  }
-  const saveEdit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingId) return
-    try { updateTask(editingId, editForm); setEditingId(null); refresh() }
-    catch (err: any) { alert(err.message) }
-  }
+  useEffect(() => { loadData() }, [publicKey, allTasks])
 
   /* ── Stats ── */
   const activePosted  = myPostedTasks.filter(t => t.status === 'open' || t.status === 'in_progress').length
@@ -184,55 +164,38 @@ export const Dashboard: React.FC = () => {
                   const sol = lamportsToSol(task.lamports)
                   const isIP = task.status === 'in_progress'
                   const isOpen = task.status === 'open'
-                  const isEditing = editingId === task.id
                   const statusColor = { open: '#14F195', in_progress: '#ffaa44', completed: '#9945FF', cancelled: '#ff6060', disputed: '#ff4444' }[task.status] ?? '#8888aa'
-
                   return (
                     <div
                       key={task.id}
                       className="card"
-                      style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14, cursor: isEditing ? 'default' : 'pointer', borderLeft: `3px solid ${statusColor}` }}
-                      onClick={() => !isEditing && navigate(`/tasks/${task.id}`)}
+                      style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14, cursor: 'pointer', borderLeft: `3px solid ${statusColor}` }}
+                      onClick={() => navigate(`/tasks/${task.id}`)}
                     >
-                      {isEditing ? (
-                        <form onSubmit={saveEdit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }} onClick={e => e.stopPropagation()}>
-                          <input className="form-input" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} placeholder="Title" required />
-                          <textarea className="form-input" value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} placeholder="Description" rows={3} required />
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-primary" type="submit" style={{ flex: 1 }}>Save Changes</button>
-                            <button className="btn btn-outline" type="button" onClick={() => setEditingId(null)} style={{ flex: 1 }}>Cancel</button>
-                          </div>
-                        </form>
-                      ) : (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                              <span className="badge badge-green">{task.category}</span>
-                              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <span className={`status-dot ${task.status}`} />
-                                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: statusColor, textTransform: 'uppercase' }}>
-                                  {task.status.replace('_', ' ')}
-                                </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                            <span className="badge badge-green">{task.category}</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <span className={`status-dot ${task.status}`} />
+                              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: statusColor, textTransform: 'uppercase' }}>
+                                {task.status.replace('_', ' ')}
                               </span>
-                            </div>
-                            <h3 style={{ color: '#e0ffe8', fontSize: '1.1rem', margin: 0, lineHeight: 1.4 }}>{task.title}</h3>
+                            </span>
                           </div>
-                          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-                            <div style={{ display: 'flex', gap: 10 }}>
-                              {isOpen && <button style={{ background: 'none', border: 'none', color: '#14F195', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }} onClick={e => startEdit(e, task)}>Edit</button>}
-                              <button style={{ background: 'none', border: 'none', color: '#ff6060', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }} onClick={e => handleDelete(e, task.id)}>Delete</button>
-                            </div>
-                            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#14F195' }}>◎ {sol.toFixed(3)}</div>
-                          </div>
+                          <h3 style={{ color: '#e0ffe8', fontSize: '1.1rem', margin: 0, lineHeight: 1.4 }}>{task.title}</h3>
                         </div>
-                      )}
+                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                          <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#14F195' }}>◎ {sol.toFixed(3)}</div>
+                        </div>
+                      </div>
 
-                      {!isEditing && isOpen && (
+                      {isOpen && (
                         <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, fontSize: '0.83rem', color: '#5a8a70' }}>
                           Waiting for an expert to accept...
                         </div>
                       )}
-                      {!isEditing && isIP && (
+                      {isIP && (
                         <div style={{ padding: '10px 14px', background: 'rgba(20,241,149,0.08)', borderRadius: 8, fontSize: '0.83rem', color: '#14F195', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span>Expert is working — review and release payment when ready.</span>
                           <span style={{ fontWeight: 800 }}>Review →</span>

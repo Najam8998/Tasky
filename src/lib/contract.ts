@@ -124,11 +124,9 @@ export async function createTaskEscrow(
 export async function acceptTask(
   wallet: any,
   connection: Connection,
-  taskId: string
+  task: Task
 ): Promise<{ signature: string }> {
   const program = getProgram(wallet, connection);
-  const task = getTask(taskId);
-  if (!task) throw new Error('Task not found');
   if (task.status !== 'open') throw new Error('Task is not open');
 
   const helper = wallet.publicKey as PublicKey;
@@ -177,11 +175,9 @@ export async function acceptTask(
 export async function releaseEscrow(
   wallet: any,
   connection: Connection,
-  taskId: string
+  task: Task
 ): Promise<{ signature: string }> {
   const program = getProgram(wallet, connection);
-  const task = getTask(taskId);
-  if (!task) throw new Error('Task not found');
   if (task.status !== 'in_progress') throw new Error('Task not in progress');
   if (task.creator !== wallet.publicKey.toBase58()) throw new Error('Only client can release funds');
   if (!task.helper) throw new Error('No helper assigned');
@@ -226,11 +222,9 @@ export async function getEscrowBalance(taskId: string): Promise<number> {
 export async function raiseDispute(
   wallet: any,
   connection: Connection,
-  taskId: string
+  task: Task
 ): Promise<{ signature: string }> {
   const program = getProgram(wallet, connection);
-  const task = getTask(taskId);
-  if (!task) throw new Error('Task not found');
   if (task.status !== 'in_progress') throw new Error('Task not in progress');
 
   const signature = await program.methods.raiseDispute().accounts({
@@ -260,12 +254,10 @@ export async function raiseDispute(
 export async function adminResolve(
   wallet: any,
   connection: Connection,
-  taskId: string,
+  task: Task,
   resolution: 'release' | 'refund'
 ): Promise<{ signature: string }> {
   const program = getProgram(wallet, connection);
-  const task = getTask(taskId);
-  if (!task) throw new Error('Task not found');
   if (task.status !== 'disputed') throw new Error('Task not disputed');
 
   const signature = await program.methods.adminResolve(resolution === 'release').accounts({
@@ -295,20 +287,7 @@ export async function adminResolve(
   return { signature };
 }
 
-export function updateTask(taskId: string, updates: Partial<Task>): void {
-  const task = getTask(taskId);
-  if (!task) throw new Error('Task not found');
-  if (task.status !== 'open') throw new Error('Cannot edit task after it has been accepted');
-  
-  const updated = { ...task, ...updates };
-  saveTask(updated);
-}
 
-export function deleteTask(taskId: string): void {
-  const all = getAllTasks();
-  const filtered = all.filter(t => t.id !== taskId);
-  localStorage.setItem('tasky_tasks', JSON.stringify(filtered));
-}
 
 // ---- localStorage persistence (Hybrid Caching) ----
 
